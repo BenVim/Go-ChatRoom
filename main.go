@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"time"
 	"bufio"
+	"fmt"
+	"log"
+	"net"
 	"strings"
+	"time"
 )
 
 var globalRoom *Room = NewRoom()
@@ -55,27 +56,27 @@ func (r *Room) Broadcast(who string, msg string) {
 
 }
 
-func HandleConn(conn net.Conn)  {
+func HandleConn(conn net.Conn) {
 	defer conn.Close()
 
 	r := bufio.NewReader(conn)
-	line, err :=r.ReadString('\n')
-	if err !=nil{
+	line, err := r.ReadString('\n')
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	line = strings.TrimSpace(line)
 	fields := strings.Fields(line)
-	if len(fields) !=2{
+	if len(fields) != 2 {
 		conn.Write([]byte("user or password is error, is exit!"))
 		return
 	}
 
 	user := fields[0]
-	password:=fields[1]
+	password := fields[1]
 
-	if password!="123"{
+	if password != "123" {
 		fmt.Println("password error!")
 		return
 	}
@@ -83,17 +84,17 @@ func HandleConn(conn net.Conn)  {
 	globalRoom.Join(user, conn)
 	globalRoom.Broadcast("System", fmt.Sprintf("%s join room", user))
 
-	for{
+	for {
 		conn.Write([]byte("send message:>>>"))
-		line, err :=r.ReadString("\n")
+		line, err := r.ReadString('\n')
 
-		if err !=nil{
+		if err != nil {
 			break
 		}
 
 		line = strings.TrimSpace(line)
 		fmt.Println(user, line)
-		globalRoom.Broadcast(user,line)
+		globalRoom.Broadcast(user, line)
 	}
 
 	globalRoom.Broadcast("System", fmt.Sprintf("%s Leave room", user))
@@ -102,6 +103,20 @@ func HandleConn(conn net.Conn)  {
 }
 
 func main() {
-	fmt.Println("fuck")
+	fmt.Println("Chat Room Server!")
+	addr := "0.0.0.0:8888"
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer listener.Close()
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
+		go HandleConn(conn)
+	}
 
 }
