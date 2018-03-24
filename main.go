@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"bufio"
+	"strings"
 )
 
 var globalRoom *Room = NewRoom()
@@ -56,6 +58,46 @@ func (r *Room) Broadcast(who string, msg string) {
 func HandleConn(conn net.Conn)  {
 	defer conn.Close()
 
+	r := bufio.NewReader(conn)
+	line, err :=r.ReadString('\n')
+	if err !=nil{
+		fmt.Println(err)
+		return
+	}
+
+	line = strings.TrimSpace(line)
+	fields := strings.Fields(line)
+	if len(fields) !=2{
+		conn.Write([]byte("user or password is error, is exit!"))
+		return
+	}
+
+	user := fields[0]
+	password:=fields[1]
+
+	if password!="123"{
+		fmt.Println("password error!")
+		return
+	}
+
+	globalRoom.Join(user, conn)
+	globalRoom.Broadcast("System", fmt.Sprintf("%s join room", user))
+
+	for{
+		conn.Write([]byte("send message:>>>"))
+		line, err :=r.ReadString("\n")
+
+		if err !=nil{
+			break
+		}
+
+		line = strings.TrimSpace(line)
+		fmt.Println(user, line)
+		globalRoom.Broadcast(user,line)
+	}
+
+	globalRoom.Broadcast("System", fmt.Sprintf("%s Leave room", user))
+	globalRoom.Leave(user)
 
 }
 
