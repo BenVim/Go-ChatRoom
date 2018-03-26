@@ -116,6 +116,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		//启动协程
 		go HandleConn(conn)
 	}
 
